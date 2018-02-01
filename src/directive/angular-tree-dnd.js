@@ -30,6 +30,7 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
         $scope.$globals       = {};
         $scope.$class         = {};
 
+		$scope.tree       = {};
         $scope.treeData   = [];
         $scope.tree_nodes = [];
 
@@ -41,6 +42,8 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
                 '-1': $attrs.iconLeaf || 'glyphicon glyphicon-file'
             }
         );
+		
+		//$scope.tree.on_select = $scope.$eval($attrs.onSelect);		//not works
 
         $scope.for_all_descendants = function (node, fn, parent, checkSibling) {
             if (angular.isFunction(fn)) {
@@ -88,11 +91,11 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
             if (angular.isDefined($scope.tree) && angular.isFunction($scope.tree.on_click)) {
                 // We want to detach from Angular's digest cycle so we can
                 // independently measure the time for one cycle.
-                setTimeout(
-                    function () {
+                //setTimeout(
+                //    function () {
                         $scope.tree.on_click(node);
-                    }, 0
-                );
+                //    }, 0
+                //);
             }
         };
 
@@ -102,13 +105,13 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
                     $scope.tree.select_node(node);
                 }
 
-                if (angular.isFunction($scope.tree.on_select)) {
-                    setTimeout(
-                        function () {
-                            $scope.tree.on_select(node);
-                        }, 0
-                    );
-                }
+                //if (angular.isFunction($scope.tree.on_select)) {
+                //    setTimeout(
+                //        function () {
+                //            $scope.tree.on_select(node);
+                //        }, 0
+                //    );
+                //}
             }
         };
 
