@@ -318,6 +318,7 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
         $scope.$globals       = {};
         $scope.$class         = {};
 
+		$scope.tree       = {};
         $scope.treeData   = [];
         $scope.tree_nodes = [];
 
@@ -329,6 +330,8 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
                 '-1': $attrs.iconLeaf || 'glyphicon glyphicon-file'
             }
         );
+		
+		//$scope.tree.on_select = $scope.$eval($attrs.onSelect);		//not works
 
         $scope.for_all_descendants = function (node, fn, parent, checkSibling) {
             if (angular.isFunction(fn)) {
@@ -376,11 +379,11 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
             if (angular.isDefined($scope.tree) && angular.isFunction($scope.tree.on_click)) {
                 // We want to detach from Angular's digest cycle so we can
                 // independently measure the time for one cycle.
-                setTimeout(
-                    function () {
+                //setTimeout(
+                //    function () {
                         $scope.tree.on_click(node);
-                    }, 0
-                );
+                //    }, 0
+                //);
             }
         };
 
@@ -390,13 +393,13 @@ function fnInitTreeDnD($timeout, $http, $compile, $parse, $window, $document, $t
                     $scope.tree.select_node(node);
                 }
 
-                if (angular.isFunction($scope.tree.on_select)) {
-                    setTimeout(
-                        function () {
-                            $scope.tree.on_select(node);
-                        }, 0
-                    );
-                }
+                //if (angular.isFunction($scope.tree.on_select)) {
+                //    setTimeout(
+                //        function () {
+                //            $scope.tree.on_select(node);
+                //        }, 0
+                //    );
+                //}
             }
         };
 
@@ -3053,26 +3056,29 @@ angular.module('ntt.TreeDnD')
 
         function _$init(scope) {
             var n, tree = {
-                selected_node:        null,
+                //selected_node:        null,
                 for_all_descendants:  scope.for_all_descendants,
                 select_node:          function (node) {
                     if (!node) {
-                        if (tree.selected_node) {
-                            delete tree.selected_node.__selected__;
+                        if (this.selected_node) {
+                            delete this.selected_node.__selected__;
                         }
-                        tree.selected_node = null;
+                        this.selected_node = null;
+                        if (angular.isFunction(this.on_select)) {
+                            this.on_select(node);
+                        }
                         return null;
                     }
 
-                    if (node !== tree.selected_node) {
-                        if (tree.selected_node) {
-                            delete tree.selected_node.__selected__;
+                    if (node !== this.selected_node) {
+                        if (this.selected_node) {
+                            delete this.selected_node.__selected__;
                         }
                         node.__selected__  = true;
-                        tree.selected_node = node;
-                        tree.expand_all_parents(node);
-                        if (angular.isFunction(tree.on_select)) {
-                            tree.on_select(node);
+                        this.selected_node = node;
+                        this.expand_all_parents(node);
+                        if (angular.isFunction(this.on_select)) {
+                            this.on_select(node);
                         }
                     }
 
@@ -3080,15 +3086,18 @@ angular.module('ntt.TreeDnD')
                 },
                 deselect_node:        function () {
                     _target = null;
-                    if (tree.selected_node) {
-                        delete tree.selected_node.__selected__;
-                        _target            = tree.selected_node;
-                        tree.selected_node = null;
+                    if (this.selected_node) {
+                        delete this.selected_node.__selected__;
+                        _target            = this.selected_node;
+                        this.selected_node = null;
+						if (angular.isFunction(this.on_select)) {
+                            this.on_select(null);
+                        }
                     }
                     return _target;
                 },
                 get_parent:           function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (node && node.__parent_real__ !== null) {
                         return scope.tree_nodes[node.__parent_real__];
@@ -3096,27 +3105,27 @@ angular.module('ntt.TreeDnD')
                     return null;
                 },
                 for_all_ancestors:    function (node, fn) {
-                    _parent = tree.get_parent(node);
+                    _parent = this.get_parent(node);
                     if (_parent) {
                         if (fn(_parent)) {
                             return false;
                         }
 
-                        return tree.for_all_ancestors(_parent, fn);
+                        return this.for_all_ancestors(_parent, fn);
                     }
                     return true;
                 },
                 expand_all_parents:   function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        tree.for_all_ancestors(node, fnSetExpand);
+                        this.for_all_ancestors(node, fnSetExpand);
                     }
                 },
                 collapse_all_parents: function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
                     if (angular.isObject(node)) {
-                        tree.for_all_ancestors(node, fnSetCollapse);
+                        this.for_all_ancestors(node, fnSetCollapse);
                     }
                 },
 
@@ -3142,42 +3151,42 @@ angular.module('ntt.TreeDnD')
                     return new_node;
                 },
                 add_node_root:                     function (new_node) {
-                    tree.add_node(null, new_node);
+                    this.add_node(null, new_node);
                     return new_node;
                 },
                 expand_all:                        function () {
                     len = scope.treeData.length;
                     for (i = 0; i < len; i++) {
-                        tree.for_all_descendants(scope.treeData[i], fnSetExpand);
+                        this.for_all_descendants(scope.treeData[i], fnSetExpand);
                     }
                 },
                 collapse_all:                      function () {
                     len = scope.treeData.length;
                     for (i = 0; i < len; i++) {
-                        tree.for_all_descendants(scope.treeData[i], fnSetCollapse);
+                        this.for_all_descendants(scope.treeData[i], fnSetCollapse);
                     }
                 },
                 remove_node:                       function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
                         if (node.__parent_real__ !== null) {
-                            _parent = tree.get_parent(node).__children__;
+                            _parent = this.get_parent(node).__children__;
                         } else {
                             _parent = scope.treeData;
                         }
 
                         _parent.splice(node.__index__, 1);
 
-                        tree.reload_data();
+                        this.reload_data();
 
-                        if (tree.selected_node === node) {
-                            tree.selected_node = null;
+                        if (this.selected_node === node) {
+                            this.selected_node = null;
                         }
                     }
                 },
                 expand_node:                       function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node) && node.__expanded__) {
                         node.__expanded__ = true;
@@ -3185,7 +3194,7 @@ angular.module('ntt.TreeDnD')
                     }
                 },
                 collapse_node:                     function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
                         node.__expanded__ = false;
@@ -3193,7 +3202,7 @@ angular.module('ntt.TreeDnD')
                     }
                 },
                 get_selected_node:                 function () {
-                    return tree.selected_node;
+                    return this.selected_node;
                 },
                 get_first_node:                    function () {
                     len = scope.treeData.length;
@@ -3204,14 +3213,14 @@ angular.module('ntt.TreeDnD')
                     return null;
                 },
                 get_children:                      function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     return node.__children__;
                 },
                 get_siblings:                      function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
                     if (angular.isObject(node)) {
-                        _parent = tree.get_parent(node);
+                        _parent = this.get_parent(node);
                         if (_parent) {
                             _target = _parent.__children__;
                         } else {
@@ -3221,9 +3230,9 @@ angular.module('ntt.TreeDnD')
                     }
                 },
                 get_next_sibling:                  function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
                     if (angular.isObject(node)) {
-                        _target = tree.get_siblings(node);
+                        _target = this.get_siblings(node);
                         n       = _target.length;
                         if (node.__index__ < n) {
                             return _target[node.__index__ + 1];
@@ -3231,14 +3240,14 @@ angular.module('ntt.TreeDnD')
                     }
                 },
                 get_prev_sibling:                  function (node) {
-                    node    = node || tree.selected_node;
-                    _target = tree.get_siblings(node);
+                    node    = node || this.selected_node;
+                    _target = this.get_siblings(node);
                     if (node.__index__ > 0) {
                         return _target[node.__index__ - 1];
                     }
                 },
                 get_first_child:                   function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
                     if (angular.isObject(node)) {
                         _target = node.__children__;
                         if (_target && _target.length > 0) {
@@ -3248,96 +3257,96 @@ angular.module('ntt.TreeDnD')
                     return null;
                 },
                 get_closest_ancestor_next_sibling: function (node) {
-                    node    = node || tree.selected_node;
-                    _target = tree.get_next_sibling(node);
+                    node    = node || this.selected_node;
+                    _target = this.get_next_sibling(node);
                     if (_target) {
                         return _target;
                     }
 
-                    _parent = tree.get_parent(node);
+                    _parent = this.get_parent(node);
                     if (_parent) {
-                        return tree.get_closest_ancestor_next_sibling(_parent);
+                        return this.get_closest_ancestor_next_sibling(_parent);
                     }
 
                     return null;
                 },
                 get_next_node:                     function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_first_child(node);
+                        _target = this.get_first_child(node);
                         if (_target) {
                             return _target;
                         } else {
-                            return tree.get_closest_ancestor_next_sibling(node);
+                            return this.get_closest_ancestor_next_sibling(node);
                         }
                     }
                 },
                 get_prev_node:                     function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_prev_sibling(node);
+                        _target = this.get_prev_sibling(node);
                         if (_target) {
-                            return tree.get_last_descendant(_target);
+                            return this.get_last_descendant(_target);
                         }
 
-                        _parent = tree.get_parent(node);
+                        _parent = this.get_parent(node);
                         return _parent;
                     }
                 },
                 get_last_descendant:               scope.getLastDescendant,
                 select_parent_node:                function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _parent = tree.get_parent(node);
+                        _parent = this.get_parent(node);
                         if (_parent) {
-                            return tree.select_node(_parent);
+                            return this.select_node(_parent);
                         }
                     }
                 },
                 select_first_node:                 function () {
-                    var firstNode = tree.get_first_node();
-                    return tree.select_node(firstNode);
+                    var firstNode = this.get_first_node();
+                    return this.select_node(firstNode);
                 },
                 select_next_sibling:               function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_next_sibling(node);
+                        _target = this.get_next_sibling(node);
                         if (_target) {
-                            return tree.select_node(_target);
+                            return this.select_node(_target);
                         }
                     }
                 },
                 select_prev_sibling:               function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_prev_sibling(node);
+                        _target = this.get_prev_sibling(node);
                         if (_target) {
-                            return tree.select_node(_target);
+                            return this.select_node(_target);
                         }
                     }
                 },
                 select_next_node:                  function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_next_node(node);
+                        _target = this.get_next_node(node);
                         if (_target) {
-                            return tree.select_node(_target);
+                            return this.select_node(_target);
                         }
                     }
                 },
                 select_prev_node:                  function (node) {
-                    node = node || tree.selected_node;
+                    node = node || this.selected_node;
 
                     if (angular.isObject(node)) {
-                        _target = tree.get_prev_node(node);
+                        _target = this.get_prev_node(node);
                         if (_target) {
-                            return tree.select_node(_target);
+                            return this.select_node(_target);
                         }
                     }
                 }
