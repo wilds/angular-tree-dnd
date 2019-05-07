@@ -19,13 +19,13 @@
       "ng-tree-dnd.min.js.map"
     ]
   },
-  "main": "dist/ng-tree-dnd.min.js",
+  "main": "dist/ng-tree-dnd.js",
   "dependencies": {
     "angular": ">=1.2.1"
   },
   "devDependencies": {
     "connect-livereload": ">=0.5.2",
-    "gulp": ">=3.8.10",
+    "gulp": "^3.9.1",
     "gulp-autoprefixer": "*",
     "gulp-changed": "*",
     "gulp-clean": ">=0.3.1",
