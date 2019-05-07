@@ -2638,6 +2638,11 @@ angular.module('ntt.TreeDnD')
                                     _move.pos    = 0;
 
                                     _drop = null;
+                                } else if (!_target.__expanded__) {
+                                    _move.parent = _target;
+                                    _move.pos    = _target.__children__.length;
+
+                                    _drop = null;
                                 } else {
                                     _move.parent = _parent;
                                     _move.pos    = _target.__index__ + 1;
